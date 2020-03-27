@@ -9,7 +9,7 @@ The data set includes total confirmed cases, deaths, and recoveries. When viewin
 calculated for each state. When viewing data for an individual state, totals are shown per-county. In each case, the
 top row will display the combined total. Data in the table is sorted by the total number of confirmed cases in descending order.
  
-Data for 3/26/2020 is shown below.
+Data for 3/27/2020 is shown below.
 
 ## Usage
 
@@ -27,6 +27,13 @@ corona-tracker 'New York'
 ```bash
 corona-tracker oregon | grep -e Clackamas -e County -e '--' | cat
 ```
+
+#### Outputs the following Markdown
+
+| County     | Confirmed | Deaths | Recovered | Last Update         |
+| ---------- | --------- | ------ | --------- | ------------------- |
+| Clackamas  | 21        | 2      | 0         | 2020-03-26 23:48:35 |
+
 
 ## USA
 

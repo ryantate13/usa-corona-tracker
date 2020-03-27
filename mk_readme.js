@@ -1,4 +1,5 @@
 const fs = require('fs'),
+    {execSync} = require('child_process'),
     stripAnsi = require('strip-ansi'),
     readme = text => fs.appendFileSync('README.md', `${text}\n\n`),
     states = require('./states');
@@ -35,8 +36,14 @@ ${'```'}
 
 ### Get data for an individual county
 ${'```bash'}
-corona-tracker oregon | grep -e Clackamas -e County -e '--' | cat
+corona-tracker oregon | grep -e Clackamas -e County -e --
 ${'```'}
+
+#### Outputs the following Markdown
+
+${
+    execSync('node index.js oregon | grep -e Clackamas -e County -e --').toString()
+}
 
 `);
 
