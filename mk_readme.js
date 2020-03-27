@@ -4,7 +4,7 @@ const fs = require('fs'),
     states = require('./states');
 
 console.log = s => s;
-process.stdout.isTTY = true;
+process.stdout.isTTY = false;
 
 const {display_data} = require('./corona');
 
@@ -41,7 +41,7 @@ ${'```'}
 `);
 
 (async () => {
-    const sep = '```\n';
+    const sep = '\n';
     readme('## USA');
     readme(sep + stripAnsi(await display_data()) + sep);
 

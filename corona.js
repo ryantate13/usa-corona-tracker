@@ -22,13 +22,22 @@ const csv_url = (sub_days = 0) => {
     ].join('/');
 };
 
-function get_corona_data() {
-    return fetch(csv_url())
-        .catch(() => fetch(csv_url(1)))
-        .then(r => r.text())
-        .then(csv => parse(csv, {header: true})
-            .data
-            .filter(row => row.Country_Region === 'US'));
+async function get_corona_data() {
+    let csv;
+
+    try {
+        csv = await fetch(csv_url()).then(r => {
+            if(!r.ok)
+                throw new Error();
+            return r.text();
+        });
+    } catch {
+        csv = await fetch(csv_url(1)).then(r => r.text());
+    }
+
+    return parse(csv, {header: true})
+        .data
+        .filter(row => row.Country_Region === 'US');
 }
 
 const is_number = v => Number(v) == v;

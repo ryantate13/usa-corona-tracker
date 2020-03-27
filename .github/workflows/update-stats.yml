@@ -1,0 +1,30 @@
+name: Update README with Latest Data
+on:
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Node 12
+        run: |
+          sudo apt-get update && sudo apt-get -y install xz-utils wget rsync
+          wget -O /tmp/node.tgz https://nodejs.org/dist/v12.16.1/node-v12.16.1-linux-x64.tar.xz
+          cd /tmp && tar -xf node.tgz && cd -
+          rsync -a /tmp/node-v12.16.1-linux-x64/ /usr/local/
+      - uses: actions/checkout@master
+      - name: Update README
+        run: |
+          npm install
+          node mk_readme.js
+      - name: Commit
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          git commit -m "Update README"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
