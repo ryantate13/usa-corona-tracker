@@ -1,7 +1,10 @@
 {
-  "name": "usa-corona-tracker",
+  "name": "@ruyantate/corona-tracker",
   "version": "1.0.0",
   "description": "USA COVID-19 Data",
+  "bin": {
+    "corona-tracker": "./index.js"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
