@@ -9,7 +9,10 @@ process.stdout.isTTY = false;
 
 const {display_data} = require('./corona');
 
-fs.writeFileSync('README.md', `# Corona Virus Tracker for USA
+(async () => {
+    const usa = await display_data();
+
+    fs.writeFileSync('README.md', `# Corona Virus Tracker for USA
 
 Fetches and displays most recent data from the [Johns Hopkins Data Repository on Github](https://github.com/CSSEGISandData/COVID-19)
 via the CLI. Output is displayed in the terminal. When ${'`'}process.stdout${'`'} is detected to be a TTY, output will
@@ -20,7 +23,16 @@ The data set includes total confirmed cases, deaths, and recoveries. When viewin
 calculated for each state. When viewing data for an individual state, totals are shown per-county. In each case, the
 top row will display the combined total. Data in the table is sorted by the total number of confirmed cases in descending order.
  
-Data for ${new Date().toLocaleString().split(',').shift()} is shown below.
+Data for ${
+    new Date(
+        usa.split('\n')[2].split('|').slice(-2).shift(),
+    ).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    })
+} is shown below.
 
 ## Usage
 
@@ -42,17 +54,16 @@ ${'```'}
 #### Outputs the following Markdown
 
 ${
-    execSync('node index.js oregon | grep -e Clackamas -e County -e --').toString()
-}
+        execSync('node index.js oregon | grep -e Clackamas -e County -e --').toString()
+    }
 
 `);
 
-(async () => {
     const sep = '\n';
     readme('## USA');
-    readme(sep + stripAnsi(await display_data()) + sep);
+    readme(sep + stripAnsi(usa) + sep);
 
-    for(const state of states){
+    for (const state of states) {
         readme(`## ${state}`);
         readme(sep + stripAnsi(await display_data(state)) + sep);
     }
