@@ -10,9 +10,9 @@ jobs:
       - name: Install Node 12
         run: |
           sudo apt-get update && sudo apt-get -y install xz-utils wget rsync
-          wget -O /tmp/node.tgz https://nodejs.org/dist/v12.16.1/node-v12.16.1-linux-x64.tar.xz
-          cd /tmp && tar -xf node.tgz && cd -
-          rsync -a /tmp/node-v12.16.1-linux-x64/ /usr/local/
+          sudo wget -O /tmp/node.tgz https://nodejs.org/dist/v12.16.1/node-v12.16.1-linux-x64.tar.xz
+          cd /tmp && sudo tar -xf node.tgz && cd -
+          sudo rsync -a /tmp/node-v12.16.1-linux-x64/ /usr/local/
       - uses: actions/checkout@master
       - name: Update README
         run: |
