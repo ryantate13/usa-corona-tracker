@@ -1,7 +1,14 @@
 {
   "name": "@ryantate/corona-tracker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "USA COVID-19 Data",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryantate13/usa-corona-tracker"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "corona-tracker": "./index.js"
   },

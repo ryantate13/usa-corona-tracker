@@ -1,43 +1,37 @@
-const fs = require('fs'),
-    fetch = require('node-fetch'),
+const fetch = require('node-fetch'),
     {parse} = require('papaparse'),
     table = process.stdout.isTTY ? require('table').table : require('markdown-table'),
-    {redBright, blue, yellow} = require('chalk');
+    chalk = require('chalk');
 
 const zero_padded = t => ('0' + t.toString()).slice(-2);
 
-const csv_url = (sub_days = 0) => {
+const formatted_date = (sub_days = 0) => {
     const d = new Date();
     d.setDate(d.getDate() - sub_days);
-    const formatted_date = `${zero_padded(d.getMonth() + 1)}-${zero_padded(d.getDate())}-${d.getFullYear()}`;
-    return [
-        'https:/',
-        'raw.githubusercontent.com',
-        'CSSEGISandData',
-        'COVID-19',
-        'master',
-        'csse_covid_19_data',
-        'csse_covid_19_daily_reports',
-        `${formatted_date}.csv`
-    ].join('/');
+    return `${zero_padded(d.getMonth() + 1)}-${zero_padded(d.getDate())}-${d.getFullYear()}`;
 };
 
 async function get_corona_data() {
-    let csv;
+    const latest_data = await fetch([
+            'https:/',
+            'api.github.com',
+            'repos',
+            'CSSEGISandData',
+            'COVID-19',
+            'contents',
+            'csse_covid_19_data',
+            'csse_covid_19_daily_reports',
+        ].join('/')).then(r => r.json()),
+        csv_index = latest_data.reduce((a, c) => c.name.endsWith('.csv')
+            ? {...a, [c.name.split('.csv').shift()]: c}
+            : a,
+            {},
+        );
 
-    try {
-        csv = await fetch(csv_url()).then(r => {
-            if(!r.ok)
-                throw new Error();
-            return r.text();
-        });
-    } catch {
-        csv = await fetch(csv_url(1)).then(r => r.text());
-    }
+    const {download_url} = csv_index[formatted_date()] || csv_index[formatted_date(1)],
+        csv = await fetch(download_url).then(r => r.text());
 
-    return parse(csv, {header: true})
-        .data
-        .filter(row => row.Country_Region === 'US');
+    return parse(csv, {header: true}).data.filter(row => row.Country_Region === 'US');
 }
 
 const is_number = v => Number(v) == v;
@@ -79,6 +73,19 @@ function select(data, state) {
     return [total].concat(selected);
 }
 
+const shades = [
+    'FFE5E5',
+    'FFCCCC',
+    'FFB3B3',
+    'FF9999',
+    'FF7F7F',
+    'FF6666',
+    'FF4D4D',
+    'FF3333',
+    'FF1A1A',
+    'FF0000',
+];
+
 async function display_data(state) {
     const data = await get_corona_data(),
         to_display = select(data, state);
@@ -91,15 +98,12 @@ async function display_data(state) {
             table(
                 [Object.keys(sorted[0])]
                     .concat(sorted.map(row => Object.values(row).map(v => {
-                        if (!is_number(v) || v === 0)
+                        if (!is_number(v) || !v)
                             return v;
-                        if (v >= 1000)
-                            return redBright(v);
-                        if (v >= 100)
-                            return yellow(v);
-                        return blue(v);
-                    })))
-            )
+                        const color = shades[Math.min(Math.floor(v / 111), 9)];
+                        return chalk.hex(color)(v);
+                    }))),
+            ),
         );
     }
 }
