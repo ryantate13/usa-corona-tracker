@@ -1,37 +1,39 @@
 const fetch = require('node-fetch'),
     {parse} = require('papaparse'),
-    table = process.stdout.isTTY ? require('table').table : require('markdown-table'),
-    chalk = require('chalk');
+    markdown_table = require('markdown-table'),
+    cli_table = require('table').table,
+    chalk = require('chalk'),
+    chart = require('asciichart');
 
 const zero_padded = t => ('0' + t.toString()).slice(-2);
 
-const formatted_date = (sub_days = 0) => {
+const csv_url = (sub_days = 0) => {
     const d = new Date();
     d.setDate(d.getDate() - sub_days);
-    return `${zero_padded(d.getMonth() + 1)}-${zero_padded(d.getDate())}-${d.getFullYear()}`;
+    return [
+        'https:/',
+        'raw.githubusercontent.com',
+        'CSSEGISandData',
+        'COVID-19',
+        'master',
+        'csse_covid_19_data',
+        'csse_covid_19_daily_reports',
+        `${zero_padded(d.getMonth() + 1)}-${zero_padded(d.getDate())}-${d.getFullYear()}.csv`
+    ].join('/');
 };
 
 async function get_corona_data() {
-    const latest_data = await fetch([
-            'https:/',
-            'api.github.com',
-            'repos',
-            'CSSEGISandData',
-            'COVID-19',
-            'contents',
-            'csse_covid_19_data',
-            'csse_covid_19_daily_reports',
-        ].join('/')).then(r => r.json()),
-        csv_index = latest_data.reduce((a, c) => c.name.endsWith('.csv')
-            ? {...a, [c.name.split('.csv').shift()]: c}
-            : a,
-            {},
-        );
+    let csv,
+        sub_days = 0;
 
-    const {download_url} = csv_index[formatted_date()] || csv_index[formatted_date(1)],
-        csv = await fetch(download_url).then(r => r.text());
+    while (!csv) {
+        csv = await fetch(csv_url(sub_days)).then(r => r.ok ? r.text() : null);
+        ++sub_days;
+    }
 
-    return parse(csv, {header: true}).data.filter(row => row.Country_Region === 'US');
+    return parse(csv, {header: true})
+        .data.
+        filter(row => row.Country_Region === 'US');
 }
 
 const is_number = v => Number(v) == v;
@@ -73,7 +75,7 @@ function select(data, state) {
     return [total].concat(selected);
 }
 
-const shades = [
+const shade = v => [
     'FFE5E5',
     'FFCCCC',
     'FFB3B3',
@@ -84,28 +86,60 @@ const shades = [
     'FF3333',
     'FF1A1A',
     'FF0000',
-];
+][Math.min(Math.floor(v / 111), 9)];
 
-async function display_data(state) {
-    const data = await get_corona_data(),
-        to_display = select(data, state);
+async function display_data(data, state, is_tty) {
+    const table = is_tty ? cli_table : markdown_table;
 
-    if (!to_display.length)
-        console.error('No data found for ' + JSON.stringify(state));
-    else {
-        const sorted = to_display.sort((a, b) => b.Confirmed - a.Confirmed);
-        return console.log(
-            table(
-                [Object.keys(sorted[0])]
-                    .concat(sorted.map(row => Object.values(row).map(v => {
-                        if (!is_number(v) || !v)
-                            return v;
-                        const color = shades[Math.min(Math.floor(v / 111), 9)];
-                        return chalk.hex(color)(v);
-                    }))),
+    let output = '';
+
+    if (is_tty) {
+        const time_series_url = 'https://covidtracking.com/api/' + (
+                state
+                    ?
+                    `states/daily?state=${state}`
+                    :
+                    'us/daily'
             ),
-        );
+            time_series_data = (await fetch(time_series_url).then(r => r.json())).reverse(),
+            chart_format = {
+                height: 20,
+                format(x) {
+                    return Math.floor(Number(x)).toLocaleString().padStart(8).slice(-8);
+                },
+            };
+        output += table([
+            ['Confirmed', 'Deaths'],
+            ['positive', 'death']
+                .map(stat => time_series_data.map(r => r[stat] || 0))
+                .map(stats => {
+                    const plot_lines = chart.plot(stats, chart_format).split('\n');
+                    return plot_lines.map(line => {
+                        const [total, graph] = line.split(/[┼┤]/),
+                            numeric_total = Number(total.replace(/,/g, ''));
+                        return line.replace(
+                            graph,
+                            chalk.hex(shade(numeric_total))(graph),
+                        );
+                    }).join('\n');
+                }),
+            Object.entries({Start: 0, End: time_series_data.length - 1})
+                .map(([t, i]) => `${t} Date: ${
+                    new Date(time_series_data[i].dateChecked).toLocaleDateString()
+                }`),
+        ]);
     }
+
+    const sorted = data.sort((a, b) => b.Confirmed - a.Confirmed);
+
+    return output + table(
+        [Object.keys(sorted[0])]
+            .concat(sorted.map(row => Object.values(row).map(v => {
+                if (!is_number(v) || !v)
+                    return v;
+                return chalk.hex(shade(v))(v);
+            }))),
+    );
 }
 
-module.exports = {display_data};
+module.exports = {display_data, get_corona_data, select};

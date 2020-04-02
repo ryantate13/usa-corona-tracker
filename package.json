@@ -1,6 +1,6 @@
 {
   "name": "@ryantate/corona-tracker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "USA COVID-19 Data",
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "asciichart": "^1.5.15",
     "chalk": "^3.0.0",
     "markdown-table": "^2.0.0",
     "node-fetch": "^2.6.0",

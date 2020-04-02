@@ -2,22 +2,19 @@ const fs = require('fs'),
     {execSync} = require('child_process'),
     stripAnsi = require('strip-ansi'),
     readme = text => fs.appendFileSync('README.md', `${text}\n\n`),
-    states = require('./states');
+    {state_list} = require('./states');
 
-console.log = s => s;
-process.stdout.isTTY = false;
-
-const {display_data} = require('./corona');
+const {display_data, get_corona_data, select} = require('./corona');
 
 (async () => {
-    const usa = await display_data();
+    const corona_data = await get_corona_data();
 
     fs.writeFileSync('README.md', `# Corona Virus Tracker for USA
 
 Fetches and displays most recent data from the [Johns Hopkins Data Repository on Github](https://github.com/CSSEGISandData/COVID-19)
-via the CLI. Output is displayed in the terminal. When ${'`'}process.stdout${'`'} is detected to be a TTY, output will
-be ANSI colorized and displayed in a UTF8 table, otherwise the script will output Markdown to simplify piping between
-scripts or to a file.
+via the CLI. Time series data for graphs is supplied by [The COVID Tracking Project](https://covidtracking.com/). Output
+is displayed in the terminal. When ${'`'}process.stdout${'`'} is detected to be a TTY, output will be ANSI colorized and
+displayed in a UTF8 table, otherwise the script will output Markdown to simplify piping between scripts or to a file.
 
 The data set includes total confirmed cases, deaths, and recoveries. When viewing data for the entire USA, totals are
 calculated for each state. When viewing data for an individual state, totals are shown per-county. In each case, the
@@ -25,7 +22,7 @@ top row will display the combined total. Data in the table is sorted by the tota
  
 Data for ${
     new Date(
-        usa.split('\n')[2].split('|').slice(-2).shift(),
+        corona_data[0].Last_Update,
     ).toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -54,17 +51,20 @@ ${'```'}
 #### Outputs the following Markdown
 
 ${
-        execSync('node index.js oregon | grep -e Clackamas -e County -e --').toString()
-    }
+    execSync('node index.js oregon | grep -e Clackamas -e County -e --').toString()
+}
 
 `);
 
     const sep = '\n';
     readme('## USA');
-    readme(sep + stripAnsi(usa) + sep);
+    readme(sep + stripAnsi(await display_data(select(corona_data), null, false)) + sep);
 
-    for (const state of states) {
-        readme(`## ${state}`);
-        readme(sep + stripAnsi(await display_data(state)) + sep);
+    for (const state of state_list) {
+        const state_data = select(corona_data, state);
+        if(state_data.length){
+            readme(`## ${state}`);
+            readme(sep + stripAnsi(await display_data(state_data, null, false)) + sep);
+        }
     }
 })();
