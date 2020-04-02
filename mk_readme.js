@@ -31,6 +31,12 @@ Data for ${
     })
 } is shown below.
 
+## Installation
+
+${'```bash'}
+npm i -g @ryantate/corona-tracker
+${'```'}
+
 ## Usage
 
 ### Show all data for the US
