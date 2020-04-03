@@ -88,8 +88,11 @@ const shade = v => [
     'FF0000',
 ][Math.min(Math.floor(v / 111), 9)];
 
+const GRAPH_PADDING = 8;
+
 async function display_data(data, state, is_tty) {
-    const table = is_tty ? cli_table : markdown_table;
+    const table = is_tty ? cli_table : markdown_table,
+        sorted = data.sort((a, b) => b.Confirmed - a.Confirmed);
 
     let output = '';
 
@@ -105,22 +108,33 @@ async function display_data(data, state, is_tty) {
             chart_format = {
                 height: 20,
                 format(x) {
-                    return Math.floor(Number(x)).toLocaleString().padStart(8).slice(-8);
+                    return Math.floor(Number(x)).toLocaleString().padStart(GRAPH_PADDING).slice(-GRAPH_PADDING);
                 },
             };
+
         output += table([
             ['Confirmed', 'Deaths'],
             ['positive', 'death']
-                .map(stat => time_series_data.map(r => r[stat] || 0))
-                .map(stats => {
-                    const plot_lines = chart.plot(stats, chart_format).split('\n');
-                    return plot_lines.map(line => {
+                .map(stat => {
+                    const stats = time_series_data.map(r => r[stat] || 0),
+                        plot_lines = chart.plot(stats, chart_format).split('\n');
+
+                    return plot_lines.map((line, i) => {
                         const [total, graph] = line.split(/[┼┤]/),
-                            numeric_total = Number(total.replace(/,/g, ''));
-                        return line.replace(
-                            graph,
-                            chalk.hex(shade(numeric_total))(graph),
-                        );
+                            numeric_total = Number(total.replace(/,/g, '')),
+                            colorized = line.replace(graph, chalk.hex(shade(numeric_total))(graph));
+
+                        switch(i){
+                            case 0:
+                                return colorized
+                                    .replace(total, chart_format
+                                        .format(sorted[0][stat === 'death' ? 'Deaths' : 'Confirmed']) + ' ');
+                            case (plot_lines.length - 1):
+                                return colorized
+                                    .replace(total, chart_format.format(stats[0]) + ' ');
+                            default:
+                                return colorized;
+                        }
                     }).join('\n');
                 }),
             Object.entries({Start: 0, End: time_series_data.length - 1})
@@ -130,14 +144,12 @@ async function display_data(data, state, is_tty) {
         ]);
     }
 
-    const sorted = data.sort((a, b) => b.Confirmed - a.Confirmed);
-
     return output + table(
         [Object.keys(sorted[0])]
             .concat(sorted.map(row => Object.values(row).map(v => {
                 if (!is_number(v) || !v)
                     return v;
-                return chalk.hex(shade(v))(v);
+                return chalk.hex(shade(v))(v.toLocaleString());
             }))),
     );
 }

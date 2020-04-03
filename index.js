@@ -10,7 +10,7 @@ async function main(_state){
     if (!to_display.length)
         return console.error('No data found for ' + JSON.stringify(state));
 
-    console.log(await display_data(to_display, state ? get_state_abbreviation(state) : null, process.stdout.isTTY));
+    process.stdout.write(await display_data(to_display, state && get_state_abbreviation(state), process.stdout.isTTY));
 }
 
 main(process.argv[2]).catch(console.error);
