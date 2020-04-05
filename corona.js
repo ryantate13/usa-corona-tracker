@@ -128,7 +128,7 @@ function map(data) {
     ]);
 }
 
-async function graphs(state) {
+async function graphs(state, data) {
     const time_series_url = 'https://covidtracking.com/api/' + (
             state
                 ?
@@ -136,10 +136,11 @@ async function graphs(state) {
                 :
                 'us/daily'
         ),
+        padding = 8,
         chart_format = {
             height: 20,
             format(x) {
-                return Math.floor(Number(x)).toLocaleString().padStart(8).slice(-8);
+                return Math.floor(Number(x)).toLocaleString().padStart(padding).slice(-padding);
             },
         };
 
@@ -159,16 +160,26 @@ async function graphs(state) {
     return cli_table([
         ['Confirmed Cases', 'Deaths'],
         ['positive', 'death']
-            .map(stat => time_series_data.map(r => r[stat] || 0))
-            .map(stats => {
-                const plot_lines = chart.plot(stats, chart_format).split('\n');
-                return plot_lines.map(line => {
+            .map(stat => {
+                const stats = time_series_data.map(r => r[stat] || 0),
+                    plot_lines = chart.plot(stats, chart_format).split('\n');
+
+                return plot_lines.map((line, i) => {
                     const [total, graph] = line.split(/[┼┤]/),
-                        numeric_total = Number(total.replace(/,/g, ''));
-                    return line.replace(
-                        graph,
-                        chalk.hex(shade(numeric_total))(graph),
-                    );
+                        numeric_total = Number(total.replace(/,/g, '')),
+                        colorized = line.replace(graph, chalk.hex(shade(numeric_total))(graph));
+
+                    switch(i){
+                        case 0:
+                            return colorized
+                                .replace(total, chart_format
+                                    .format(data[0][stat === 'death' ? 'Deaths' : 'Confirmed']) + ' ');
+                        case (plot_lines.length - 1):
+                            return colorized
+                                .replace(total, chart_format.format(stats[0]) + ' ');
+                        default:
+                            return colorized;
+                    }
                 }).join('\n');
             }),
         Object.entries({Start: 0, End: time_series_data.length - 1})
@@ -185,7 +196,7 @@ async function display_data(data, state, is_tty) {
         [Object.keys(data[0])]
             .concat(data.map(row => Object.values(row).map(v => (!is_tty || !is_number(v) || !v)
                 ? v
-                : chalk.hex(shade(v))(v),
+                : chalk.hex(shade(v))(v.toLocaleString()),
             ))),
     );
 }

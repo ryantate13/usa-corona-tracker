@@ -12,10 +12,10 @@ async function main(_state){
 
     if(process.stdout.isTTY){
         console.log(map(data));
-        console.log(await graphs(state));
+        console.log(await graphs(state, to_display));
     }
 
-    console.log(await display_data(to_display, state && get_state_abbreviation(state), process.stdout.isTTY));
+    process.stdout.write(await display_data(to_display, state && get_state_abbreviation(state), process.stdout.isTTY));
 }
 
 main(process.argv[2]).catch(console.error);

@@ -1,13 +1,18 @@
 const fs = require('fs'),
     {execSync} = require('child_process'),
     stripAnsi = require('strip-ansi'),
-    readme = text => fs.appendFileSync('README.md', `${text}\n\n`),
-    {state_list} = require('./states');
+    readme = text => fs.appendFileSync('README.md', `${text}\n\n`);
 
 const {display_data, get_corona_data, select} = require('./corona');
 
 (async () => {
-    const corona_data = await get_corona_data();
+    const corona_data = await get_corona_data(),
+        state_list = new Set(
+            corona_data
+                .map(({Province_State}) => Province_State)
+                .filter(s => s !== 'Recovered')
+                .sort()
+        );
 
     fs.writeFileSync('README.md', `# Corona Virus Tracker for USA
 
