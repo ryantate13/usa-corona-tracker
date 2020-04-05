@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const {display_data, get_corona_data, select} = require('./corona');
+const {display_data, get_corona_data, graphs, select, map} = require('./corona');
 const {states, get_state_abbreviation} = require('./states');
 
 async function main(_state){
@@ -10,7 +10,12 @@ async function main(_state){
     if (!to_display.length)
         return console.error('No data found for ' + JSON.stringify(state));
 
-    console.log(await display_data(to_display, state ? get_state_abbreviation(state) : null, process.stdout.isTTY));
+    if(process.stdout.isTTY){
+        console.log(map(data));
+        console.log(await graphs(state));
+    }
+
+    console.log(await display_data(to_display, state && get_state_abbreviation(state), process.stdout.isTTY));
 }
 
 main(process.argv[2]).catch(console.error);
