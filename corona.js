@@ -80,7 +80,7 @@ function select(data, state) {
         .sort((a, b) => b.Confirmed - a.Confirmed);
 }
 
-const shade = v => [
+const shader = max_deaths => v => [
     'FFE5E5',
     'FFCCCC',
     'FFB3B3',
@@ -91,7 +91,7 @@ const shade = v => [
     'FF3333',
     'FF1A1A',
     'FF0000',
-][Math.min(Math.floor(v / 111), 9)];
+][Math.min(Math.floor(v / (max_deaths / 10)), 9)];
 
 function average_shade(shades) {
     const rgb = [0, 0, 0];
@@ -102,33 +102,33 @@ function average_shade(shades) {
         .join('');
 }
 
-function map(data) {
+function map(data, shade) {
     const {usa} = maps,
         states = Object.keys(maps).filter(k => k !== 'usa'),
         state_shades = states.reduce((a, c) => ({
             ...a,
             [c]: shade(select(data, abbreviation_to_state[c.toUpperCase()])[0].Confirmed),
-        }), {});
+        }), {}),
+        is_empty_unicode = c => !(c.trim()) || c.charCodeAt(0) === 10240;
+
     return cli_table([
         ['Confirmed Cases Heat Map'],
         [
             usa.map((row, i) => {
                 const px = [...row];
                 return px.map((p, j) => {
-                    if (!p.trim())
+                    if (is_empty_unicode(p))
                         return p;
-                    const states_that_have_pixel = states.filter(s => {
-                            return maps[s][i][j] && maps[s][i][j].trim() && maps[s][i][j].charCodeAt(0) !== 10240;
-                        }),
+                    const states_that_have_pixel = states.filter(s => maps[s][i][j] && !is_empty_unicode(maps[s][i][j])),
                         shades = states_that_have_pixel.map(s => state_shades[s]);
-                    return chalk.hex(shades.length ? average_shade(shades) : '000000')(p);
+                    return chalk.hex(shades.length ? average_shade(shades) : '2B2B2b')(p);
                 }).join('');
             }).join('\n'),
         ],
     ]);
 }
 
-async function graphs(state, data) {
+async function graphs(state, data, shade) {
     const time_series_url = 'https://covidtracking.com/api/' + (
             state
                 ?
@@ -149,11 +149,10 @@ async function graphs(state, data) {
     try {
         const time_series_response = await fetch(time_series_url);
         const time_series_json = await time_series_response.json();
-        if(time_series_json.error)
+        if (time_series_json.error)
             return '';
         time_series_data = time_series_json.reverse();
-    }
-    catch {
+    } catch {
         return '';
     }
 
@@ -169,7 +168,7 @@ async function graphs(state, data) {
                         numeric_total = Number(total.replace(/,/g, '')),
                         colorized = line.replace(graph, chalk.hex(shade(numeric_total))(graph));
 
-                    switch(i){
+                    switch (i) {
                         case 0:
                             return colorized
                                 .replace(total, chart_format
@@ -189,7 +188,7 @@ async function graphs(state, data) {
     ]);
 }
 
-async function display_data(data, state, is_tty) {
+async function display_data(data, state, is_tty, shade) {
     const table = is_tty ? cli_table : markdown_table;
 
     return table(
@@ -207,4 +206,5 @@ module.exports = {
     graphs,
     map,
     select,
+    shader,
 };
