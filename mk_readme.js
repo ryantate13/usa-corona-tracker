@@ -16,14 +16,17 @@ const {display_data, get_corona_data, select} = require('./corona');
 
     fs.writeFileSync('README.md', `# Corona Virus Tracker for USA
 
+![termtosvg](./corona-tracker.svg)
+
 Fetches and displays most recent data from the [Johns Hopkins Data Repository on Github](https://github.com/CSSEGISandData/COVID-19)
-via the CLI. Time series data for graphs is supplied by [The COVID Tracking Project](https://covidtracking.com/). Output
-is displayed in the terminal. When ${'`'}process.stdout${'`'} is detected to be a TTY, output will be ANSI colorized and
-displayed in a UTF8 table, otherwise the script will output Markdown to simplify piping between scripts or to a file.
+via the CLI. Output is displayed in the terminal. When ${'`'}process.stdout${'`'} is detected to be a TTY, output will
+be ANSI colorized and displayed in a UTF8 table, otherwise the script will output Markdown to simplify piping between
+scripts or to a file.
 
 The data set includes total confirmed cases, deaths, and recoveries. When viewing data for the entire USA, totals are
 calculated for each state. When viewing data for an individual state, totals are shown per-county. In each case, the
-top row will display the combined total. Data in the table is sorted by the total number of confirmed cases in descending order.
+top row will display the combined total. Data in the table is sorted by the total number of confirmed cases in
+descending order.
  
 Data for ${
     new Date(

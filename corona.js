@@ -128,14 +128,8 @@ function map(data, shade) {
     ]);
 }
 
-async function graphs(state, data, shade) {
-    const time_series_url = 'https://covidtracking.com/api/' + (
-            state
-                ?
-                `states/daily?state=${get_state_abbreviation(state)}`
-                :
-                'us/daily'
-        ),
+async function graphs(state, shade) {
+    const days = 30,
         padding = 8,
         chart_format = {
             height: 20,
@@ -144,46 +138,55 @@ async function graphs(state, data, shade) {
             },
         };
 
-    let time_series_data;
+    let time_series_data = {};
 
     try {
-        const time_series_response = await fetch(time_series_url);
-        const time_series_json = await time_series_response.json();
-        if (time_series_json.error)
-            return '';
-        time_series_data = time_series_json.reverse();
-    } catch {
+        for (const t of ['confirmed', 'deaths']) {
+            time_series_data[t] = {};
+            const csv = await fetch([
+                    'https://raw.githubusercontent.com',
+                    'CSSEGISandData',
+                    'COVID-19',
+                    'master',
+                    'csse_covid_19_data',
+                    'csse_covid_19_time_series',
+                    `time_series_covid19_${t}_US.csv`,
+                ].join('/'))
+                    .then(r => {
+                        if(!r.ok)
+                            throw new Error('time_series csv failure');
+                        return r.text();
+                    })
+                    .then(t => t.trim()),
+                parsed = parse(csv, {header: true}),
+                data = parsed.data.filter(row => row.Country_Region === 'US'),
+                dates = parsed.meta.fields.slice(-days);
+
+            for (const d of dates) {
+                time_series_data[t][d] = 0;
+                for (const row of state ? data.filter(row => row.Province_State === state) : data)
+                    time_series_data[t][d] += Number(row[d]) || 0;
+            }
+        }
+    } catch (error) {
         return '';
     }
 
     return cli_table([
         ['Confirmed Cases', 'Deaths'],
-        ['positive', 'death']
+        Object.keys(time_series_data)
             .map(stat => {
-                const stats = time_series_data.map(r => r[stat] || 0),
-                    plot_lines = chart.plot(stats, chart_format).split('\n');
+                const plot_lines = chart.plot(Object.values(time_series_data[stat]), chart_format).split('\n');
 
-                return plot_lines.map((line, i) => {
+                return plot_lines.map(line => {
                     const [total, graph] = line.split(/[┼┤]/),
-                        numeric_total = Number(total.replace(/,/g, '')),
-                        colorized = line.replace(graph, chalk.hex(shade(numeric_total))(graph));
-
-                    switch (i) {
-                        case 0:
-                            return colorized
-                                .replace(total, chart_format
-                                    .format(data[0][stat === 'death' ? 'Deaths' : 'Confirmed']) + ' ');
-                        case (plot_lines.length - 1):
-                            return colorized
-                                .replace(total, chart_format.format(stats[0]) + ' ');
-                        default:
-                            return colorized;
-                    }
+                        numeric_total = Number(total.replace(/,/g, ''));
+                    return line.replace(graph, chalk.hex(shade(numeric_total))(graph));
                 }).join('\n');
             }),
-        Object.entries({Start: 0, End: time_series_data.length - 1})
+        Object.entries({Start: 0, End: days - 1})
             .map(([t, i]) => `${t} Date: ${
-                new Date(time_series_data[i].dateChecked).toLocaleDateString()
+                new Date(Object.keys(time_series_data.deaths)[i]).toLocaleDateString()
             }`),
     ]);
 }
@@ -197,7 +200,7 @@ async function display_data(data, state, is_tty, shade) {
                 ? v
                 : chalk.hex(shade(v))(v.toLocaleString()),
             ))),
-    );
+    ).trim();
 }
 
 module.exports = {
