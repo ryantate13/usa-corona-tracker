@@ -4,7 +4,7 @@ const fetch = require('node-fetch'),
     cli_table = require('table').table,
     chalk = require('chalk'),
     chart = require('asciichart'),
-    {maps, states: abbreviation_to_state, get_state_abbreviation} = require('./states');
+    {maps, states: abbreviation_to_state} = require('./states');
 
 const zero_padded = t => ('0' + t.toString()).slice(-2);
 
@@ -12,8 +12,7 @@ const csv_url = (sub_days = 0) => {
     const d = new Date();
     d.setDate(d.getDate() - sub_days);
     return [
-        'https:/',
-        'raw.githubusercontent.com',
+        'https://raw.githubusercontent.com',
         'CSSEGISandData',
         'COVID-19',
         'master',
@@ -130,7 +129,7 @@ function map(data, shade) {
 
 async function graphs(state, shade) {
     const days = 30,
-        padding = 8,
+        padding = 11,
         chart_format = {
             height: 20,
             format(x) {
@@ -191,7 +190,7 @@ async function graphs(state, shade) {
     ]);
 }
 
-async function display_data(data, state, is_tty, shade) {
+async function display_data(data, is_tty, shade) {
     const table = is_tty ? cli_table : markdown_table;
 
     return table(

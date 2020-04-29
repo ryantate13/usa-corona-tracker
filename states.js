@@ -68,7 +68,13 @@ const abbreviation_map = Object.entries(states)
         [v.toLowerCase()]: k,
     }), {});
 
-const get_state_abbreviation = state => abbreviation_map[state.toLowerCase()];
+const normalize_state = state => state && (
+    state.length === 2
+        ?
+        states[state.toUpperCase()]
+        :
+        states[abbreviation_map[state.toLowerCase()]]
+);
 
 const maps = {
     ak: [
@@ -1807,4 +1813,4 @@ const maps = {
     ],
 };
 
-module.exports = {states, state_list, get_state_abbreviation, maps};
+module.exports = {states, state_list, normalize_state, maps};
