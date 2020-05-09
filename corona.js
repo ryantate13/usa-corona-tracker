@@ -6,33 +6,33 @@ const fetch = require('node-fetch'),
     chart = require('asciichart'),
     {maps, states: abbreviation_to_state} = require('./states');
 
-const zero_padded = t => ('0' + t.toString()).slice(-2);
-
-const csv_url = (sub_days = 0) => {
-    const d = new Date();
-    d.setDate(d.getDate() - sub_days);
-    return [
-        'https://raw.githubusercontent.com',
-        'CSSEGISandData',
-        'COVID-19',
-        'master',
-        'csse_covid_19_data',
-        'csse_covid_19_daily_reports',
-        `${zero_padded(d.getMonth() + 1)}-${zero_padded(d.getDate())}-${d.getFullYear()}.csv`,
-    ].join('/');
-};
-
 async function get_corona_data() {
-    let csv,
-        sub_days = 0;
-
-    while (!csv) {
-        csv = await fetch(csv_url(sub_days)).then(r => r.ok ? r.text() : null);
-        ++sub_days;
+    try {
+        const data = await Promise.all(['confirmed', 'deaths'].map(t => {
+            const csv = fetch([
+                    'https://raw.githubusercontent.com',
+                    'CSSEGISandData',
+                    'COVID-19',
+                    'master',
+                    'csse_covid_19_data',
+                    'csse_covid_19_time_series',
+                    `time_series_covid19_${t}_US.csv`,
+                ].join('/'))
+                    .then(r => {
+                        if(!r.ok)
+                            throw new Error('time_series csv failure');
+                        else
+                            return r.text();
+                    })
+                    .then(t => t.trim())
+                    .then(csv => parse(csv, {header: true}).data);
+            return Promise.all([t, csv]);
+        }));
+        return Object.fromEntries(data);
     }
-
-    return parse(csv, {header: true})
-        .data.filter(row => row.Country_Region === 'US');
+    catch {
+        return null;
+    }
 }
 
 const is_number = v => Number(v) == v;
@@ -127,7 +127,7 @@ function map(data, shade) {
     ]);
 }
 
-async function graphs(state, shade) {
+function graphs(time_series_data, state, shade) {
     const days = 30,
         padding = 11,
         chart_format = {
@@ -137,38 +137,15 @@ async function graphs(state, shade) {
             },
         };
 
-    let time_series_data = {};
+    for (const t of Object.keys(time_series_data)) {
+        time_series_data[t] = {};
+        const dates = Object.keys(time_series_data[t]).slice(-days);
 
-    try {
-        for (const t of ['confirmed', 'deaths']) {
-            time_series_data[t] = {};
-            const csv = await fetch([
-                    'https://raw.githubusercontent.com',
-                    'CSSEGISandData',
-                    'COVID-19',
-                    'master',
-                    'csse_covid_19_data',
-                    'csse_covid_19_time_series',
-                    `time_series_covid19_${t}_US.csv`,
-                ].join('/'))
-                    .then(r => {
-                        if(!r.ok)
-                            throw new Error('time_series csv failure');
-                        return r.text();
-                    })
-                    .then(t => t.trim()),
-                parsed = parse(csv, {header: true}),
-                data = parsed.data.filter(row => row.Country_Region === 'US'),
-                dates = parsed.meta.fields.slice(-days);
-
-            for (const d of dates) {
-                time_series_data[t][d] = 0;
-                for (const row of state ? data.filter(row => row.Province_State === state) : data)
-                    time_series_data[t][d] += Number(row[d]) || 0;
-            }
+        for (const d of dates) {
+            time_series_data[t][d] = 0;
+            for (const row of state ? data.filter(row => row.Province_State === state) : data)
+                time_series_data[t][d] += Number(row[d]) || 0;
         }
-    } catch (error) {
-        return '';
     }
 
     return cli_table([

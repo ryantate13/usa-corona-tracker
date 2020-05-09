@@ -14,7 +14,7 @@ async function main(_state){
 
     if(is_tty){
         console.log(map(data, shade));
-        console.log(await graphs(state, shade));
+        console.log(await graphs(data, state, shade));
     }
 
     console.log(await display_data(to_display, is_tty, shade));
