@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-const {display_data, get_corona_data, graphs, select, shader, map} = require('./corona');
-const {normalize_state} = require('./states');
+const {display_data, get_corona_data, graphs, select, shader, map} = require('./corona'),
+    {normalize_state} = require('./states'),
+    upgrade_notice = require('./upgrade_notice');
 
 async function main(_state){
     const data = await get_corona_data(),
@@ -18,6 +19,7 @@ async function main(_state){
     }
 
     console.log(display_data(to_display, is_tty, shade));
+    await upgrade_notice(is_tty);
 }
 
 main(process.argv[2]).catch(console.error);
