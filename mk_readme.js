@@ -9,8 +9,8 @@ const {display_data, get_corona_data, select} = require('./corona');
     const corona_data = await get_corona_data(),
         state_list = new Set(
             corona_data
+                .confirmed
                 .map(({Province_State}) => Province_State)
-                .filter(s => s !== 'Recovered')
                 .sort()
         );
 
@@ -30,7 +30,7 @@ descending order.
  
 Data for ${
     new Date(
-        corona_data[0].Last_Update,
+        Object.keys(corona_data.confirmed[0]).pop(),
     ).toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -72,13 +72,13 @@ ${
 
     const sep = '\n';
     readme('## USA');
-    readme(sep + stripAnsi(await display_data(select(corona_data), null, false)) + sep);
+    readme(sep + stripAnsi(await display_data(select(corona_data), false)) + sep);
 
     for (const state of state_list) {
         const state_data = select(corona_data, state);
         if(state_data.length){
             readme(`## ${state}`);
-            readme(sep + stripAnsi(await display_data(state_data, null, false)) + sep);
+            readme(sep + stripAnsi(await display_data(state_data, false)) + sep);
         }
     }
 })();
