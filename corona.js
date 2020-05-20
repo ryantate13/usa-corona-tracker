@@ -36,24 +36,29 @@ const is_number = v => Number(v) == v;
 const delta = '∆',
     c1 = `Confirmed ${delta} 1 Day`,
     c7 = `Confirmed ${delta} 7 Day`,
+    c30 = `Confirmed ${delta} 30 Day`,
     d1 = `Deaths ${delta} 1 Day`,
-    d7 = `Deaths ${delta} 7 Day`;
+    d7 = `Deaths ${delta} 7 Day`,
+    d30 = `Deaths ${delta} 30 Day`;
 
 const int = n => Number.parseInt(n) || 0;
 
 function select(data, state) {
-    const dates = Object.keys(data.confirmed[0]).slice(-7),
+    const dates = Object.keys(data.confirmed[0]).slice(-30),
         last_update = dates[dates.length - 1],
         one_day = dates[dates.length - 2],
-        seven_day = dates[0],
+        seven_day = dates[23],
+        thirty_day = dates[0],
         blank = (k, v) => ({
             [k]: v,
             Confirmed: 0,
             [c1]: 0,
             [c7]: 0,
+            [c30]: 0,
             Deaths: 0,
             [d1]: 0,
             [d7]: 0,
+            [d30]: 0,
             'Last Update': last_update,
         }),
         selected = Object.values(Object.entries(data)
@@ -66,9 +71,9 @@ function select(data, state) {
 
                 const keys = (stat === 'confirmed')
                     ?
-                    ['Confirmed', c1, c7]
+                    ['Confirmed', c1, c7, c30]
                     :
-                    ['Deaths', d1, d7];
+                    ['Deaths', d1, d7, d30];
 
                 data_set
                     .filter(row => row.Province_State === state || !state)
@@ -77,19 +82,22 @@ function select(data, state) {
                             a[row[csv_key]] = blank(type, row[csv_key]);
                         const total = int(row[last_update]),
                             one = int(row[one_day]),
-                            seven = int(row[seven_day]);
+                            seven = int(row[seven_day]),
+                            thirty = int(row[thirty_day]);
                         a.Total[keys[0]] += total;
                         a.Total[keys[1]] += one;
                         a.Total[keys[2]] += seven;
+                        a.Total[keys[3]] += thirty;
                         a[row[csv_key]][keys[0]] += total;
                         a[row[csv_key]][keys[1]] += one;
                         a[row[csv_key]][keys[2]] += seven;
+                        a[row[csv_key]][keys[3]] += thirty;
                     });
                 return a;
             }, {}));
 
     for(const i of Object.keys(selected))
-        for (const j of [c1, c7, d1, d7])
+        for (const j of [c1, c7, c30, d1, d7, d30])
             selected[i][j] = selected[i][j.split(' ')[0]] - selected[i][j];
 
     return selected.sort((a, b) => b.Confirmed - a.Confirmed);
