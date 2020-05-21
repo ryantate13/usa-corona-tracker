@@ -44,10 +44,10 @@ const delta = '∆',
 const int = n => Number.parseInt(n) || 0;
 
 function select(data, state) {
-    const dates = Object.keys(data.confirmed[0]).slice(-30),
+    const dates = Object.keys(data.confirmed[0]).slice(-31),
         last_update = dates[dates.length - 1],
         one_day = dates[dates.length - 2],
-        seven_day = dates[23],
+        seven_day = dates[dates.length - 8],
         thirty_day = dates[0],
         blank = (k, v) => ({
             [k]: v,
@@ -77,21 +77,16 @@ function select(data, state) {
 
                 data_set
                     .filter(row => row.Province_State === state || !state)
-                    .forEach((row, i) => {
+                    .forEach(row => {
                         if (!a[row[csv_key]])
                             a[row[csv_key]] = blank(type, row[csv_key]);
-                        const total = int(row[last_update]),
-                            one = int(row[one_day]),
-                            seven = int(row[seven_day]),
-                            thirty = int(row[thirty_day]);
-                        a.Total[keys[0]] += total;
-                        a.Total[keys[1]] += one;
-                        a.Total[keys[2]] += seven;
-                        a.Total[keys[3]] += thirty;
-                        a[row[csv_key]][keys[0]] += total;
-                        a[row[csv_key]][keys[1]] += one;
-                        a[row[csv_key]][keys[2]] += seven;
-                        a[row[csv_key]][keys[3]] += thirty;
+                        for(const k of ['Total', row[csv_key]])
+                            [
+                                last_update,
+                                one_day,
+                                seven_day,
+                                thirty_day,
+                            ].forEach((date, i) => a[k][keys[i]] += int(row[date]));
                     });
                 return a;
             }, {}));
