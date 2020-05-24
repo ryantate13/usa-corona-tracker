@@ -80,7 +80,7 @@ function select(data, state) {
                     .forEach(row => {
                         if (!a[row[csv_key]])
                             a[row[csv_key]] = blank(type, row[csv_key]);
-                        for(const k of ['Total', row[csv_key]])
+                        for (const k of ['Total', row[csv_key]])
                             [
                                 last_update,
                                 one_day,
@@ -91,14 +91,14 @@ function select(data, state) {
                 return a;
             }, {}));
 
-    for(const i of Object.keys(selected))
+    for (const i of Object.keys(selected))
         for (const j of [c1, c7, c30, d1, d7, d30])
             selected[i][j] = selected[i][j.split(' ')[0]] - selected[i][j];
 
     return selected.sort((a, b) => b.Confirmed - a.Confirmed);
 }
 
-const shader = max_deaths => v => (v < 1) ? 'FFFFFF' :[
+const shader = max_deaths => v => (v < 1) ? 'FFFFFF' : [
     'FFE5E5',
     'FFCCCC',
     'FFB3B3',
@@ -146,10 +146,10 @@ function map(data, shade) {
     ]);
 }
 
-function graphs(data, state, shade) {
-    const days = 30,
-        dates = Object.keys(data.confirmed[0]).slice(-days),
-        padding = 11,
+function graphs(data, state) {
+    const keys = Object.keys(data.confirmed[0]),
+        dates = keys.filter(k => k.match(/^\d{1,2}\/\d{1,2}\/\d{2}$/)).slice(-100),
+        padding = 10,
         chart_format = {
             height: 20,
             format(x) {
@@ -158,33 +158,30 @@ function graphs(data, state, shade) {
         },
         time_series_data = {};
 
-    for (const t of Object.keys(data)) {
-        time_series_data[t] = {};
-
-        for (const d of dates) {
-            time_series_data[t][d] = 0;
-            for (const row of state ? data[t].filter(row => row.Province_State === state) : data[t])
-                time_series_data[t][d] += Number(row[d]) || 0;
-        }
+    for (const k in data) {
+        const data_set = state ? data[k].filter(row => row.Province_State === state) : data[k],
+            daily_totals = dates.map(d => data_set.map(row => Number(row[d])).reduce((a,b) => a+b));
+        time_series_data[k] = daily_totals.map((t, i) => i ? t - daily_totals[i-1] : t);
     }
 
-    return cli_table([
-        ['Confirmed Cases', 'Deaths'],
-        Object.keys(time_series_data)
-            .map(stat => {
-                const plot_lines = chart.plot(Object.values(time_series_data[stat]), chart_format).split('\n');
-
-                return plot_lines.map(line => {
+    return Object.keys(time_series_data).map(k => {
+        const shade = shader(Math.max(...time_series_data[k])),
+            plot = chart.plot(time_series_data[k], chart_format).split('\n')
+                .map(line => {
                     const [total, graph] = line.split(/[┼┤]/),
                         numeric_total = Number(total.replace(/,/g, ''));
                     return line.replace(graph, chalk.hex(shade(numeric_total))(graph));
                 }).join('\n');
-            }),
-        Object.entries({Start: 0, End: days - 1})
-            .map(([t, i]) => `${t} Date: ${
-                new Date(Object.keys(time_series_data.deaths)[i]).toLocaleDateString()
-            }`),
-    ]);
+
+        return cli_table([
+            [
+                `New ${k === 'confirmed' ? 'Confirmed Cases' : 'Deaths'} per Day - ${
+                    [0, dates.length - 1].map(i => new Date(dates[i]).toLocaleDateString()).join(' through ')
+                }`,
+            ],
+            [plot],
+        ]);
+    }).join('\n');
 }
 
 function display_data(data, is_tty, shade) {
@@ -196,7 +193,7 @@ function display_data(data, is_tty, shade) {
                 ?
                 is_tty ? chalk.hex(shade(v))(v.toLocaleString()) : v.toLocaleString()
                 :
-                v
+                v,
             ))),
     ).trim();
 }
