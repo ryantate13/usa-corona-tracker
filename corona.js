@@ -31,8 +31,6 @@ async function get_corona_data() {
     return Object.fromEntries(data);
 }
 
-const is_number = v => Number(v) == v;
-
 const delta = '∆',
     c1 = `Confirmed ${delta} 1 Day`,
     c7 = `Confirmed ${delta} 7 Day`,
@@ -156,13 +154,12 @@ function graphs(data, state) {
                 return Math.floor(Number(x)).toLocaleString().padStart(padding).slice(-padding);
             },
         },
-        time_series_data = {};
-
-    for (const k in data) {
-        const data_set = state ? data[k].filter(row => row.Province_State === state) : data[k],
-            daily_totals = dates.map(d => data_set.map(row => Number(row[d])).reduce((a,b) => a+b));
-        time_series_data[k] = daily_totals.map((t, i) => i ? t - daily_totals[i-1] : t);
-    }
+        time_series_data = Object.keys(data).reduce((a,c) => {
+            const data_set = state ? data[c].filter(row => row.Province_State === state) : data[c],
+                daily_totals = dates.map(d => data_set.map(row => Number(row[d])).reduce((a,b) => a+b));
+            a[c] = daily_totals.map((t, i) => i ? t - daily_totals[i-1] : t);
+            return a;
+        }, {});
 
     return Object.keys(time_series_data).map(k => {
         const shade = shader(Math.max(...time_series_data[k])),
@@ -184,17 +181,24 @@ function graphs(data, state) {
     }).join('\n');
 }
 
-function display_data(data, is_tty, shade) {
-    const table = is_tty ? cli_table : markdown_table;
+const is_number = v => typeof v === 'number';
+
+function display_data(data, is_tty) {
+    const table = is_tty ? cli_table : markdown_table,
+        keys = Object.keys(data[0]),
+        values = data.map(Object.values),
+        shaders = values[0].map((v, i) => is_number(v)
+            ? shader(Math.max(...values.slice(1).map(row => row[i])))
+            : v => v);
 
     return table(
-        [Object.keys(data[0]).map(k => k.includes(delta) ? delta + k.split(delta)[1] : k)]
-            .concat(data.map(row => Object.values(row).map(v => is_number(v)
-                ?
-                is_tty ? chalk.hex(shade(v))(v.toLocaleString()) : v.toLocaleString()
-                :
-                v,
-            ))),
+        [keys.map(k => k.includes(delta) ? delta + k.split(delta)[1] : k)]
+            .concat(values.map(row => row.map((v, i) => {
+                if(!is_number(v))
+                    return v;
+                const formatted = v.toLocaleString();
+                return is_tty ? chalk.hex(shaders[i](v))(formatted) : formatted;
+            }))),
     ).trim();
 }
 
