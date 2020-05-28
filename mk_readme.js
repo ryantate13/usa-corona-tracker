@@ -22,10 +22,10 @@ via the CLI. Output is displayed in the terminal. When ${'`'}process.stdout${'`'
 be ANSI colorized and displayed in a UTF8 table, otherwise the script will output Markdown to simplify piping between
 scripts or to a file.
 
-The data set includes total confirmed cases, deaths, and recoveries. When viewing data for the entire USA, totals are
-calculated for each state. When viewing data for an individual state, totals are shown per-county. In each case, the
-top row will display the combined total. Data in the table is sorted by the total number of confirmed cases in
-descending order.
+The data shown includes total confirmed cases, deaths, and 1, 7, and 30 day deltas for each.
+When viewing data for the entire USA, totals are calculated for each state. When viewing data for an individual state,
+totals are shown per-county. In each case, the top row will display the combined total. Data in the table is sorted by
+the total number of confirmed cases in descending order.
  
 Data for ${
     new Date(
