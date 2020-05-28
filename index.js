@@ -7,7 +7,7 @@ async function main(_state){
     const data = await get_corona_data(),
         state = normalize_state(_state),
         to_display = select(data, state),
-        shade = shader(select(data)[1].Deaths),
+        shade = shader(state ? select(data)[1].Deaths : to_display[1].Deaths),
         is_tty = process.stdout.isTTY || process.env.FORCE_COLOR;
 
     if (!to_display.length)

@@ -1,6 +1,5 @@
 const fs = require('fs'),
     {execSync} = require('child_process'),
-    stripAnsi = require('strip-ansi'),
     readme = text => fs.appendFileSync('README.md', `${text}\n\n`);
 
 const {display_data, get_corona_data, select} = require('./corona');
@@ -72,13 +71,13 @@ ${
 
     const sep = '\n';
     readme('## USA');
-    readme(sep + stripAnsi(await display_data(select(corona_data), false)) + sep);
+    readme(sep + await display_data(select(corona_data), false) + sep);
 
     for (const state of state_list) {
         const state_data = select(corona_data, state);
         if(state_data.length){
             readme(`## ${state}`);
-            readme(sep + stripAnsi(await display_data(state_data, false)) + sep);
+            readme(sep + await display_data(state_data, false) + sep);
         }
     }
 })();

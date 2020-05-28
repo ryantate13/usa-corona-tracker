@@ -1,4 +1,4 @@
-name: Update README with Latest Data
+name: Update Stats
 on:
   schedule:
     - cron:  '0 0 * * *'
@@ -7,24 +7,25 @@ jobs:
   readme:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Node 12
-        run: |
-          sudo apt-get update && sudo apt-get -y install xz-utils wget rsync
-          sudo wget -O /tmp/node.tgz https://nodejs.org/dist/v12.16.1/node-v12.16.1-linux-x64.tar.xz
-          cd /tmp && sudo tar -xf node.tgz && cd -
-          sudo rsync -a /tmp/node-v12.16.1-linux-x64/ /usr/local/
       - uses: actions/checkout@master
-      - name: Update README
+      - name: Update Stats
         run: |
           npm install
           node mk_readme.js
+          node mk_html.js
       - name: Commit
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add README.md
-          git commit -m "Update README"
-      - name: Push changes
+          git add index.html
+          git commit -m "update stats"
+      - name: Push to master
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push to gh-pages
+          uses: ad-m/github-push-action@master
+          with:
+            branch: gh-pages
+            github_token: ${{ secrets.GITHUB_TOKEN }}

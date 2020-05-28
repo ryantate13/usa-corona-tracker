@@ -125,7 +125,8 @@ function map(data, shade) {
             ...a,
             [c]: shade(select(data, normalize_state(c))[0].Confirmed),
         }), {}),
-        is_empty_unicode = c => !(c.trim()) || c.charCodeAt(0) === 10240;
+        is_empty_unicode = c => !(c.trim()) || c.charCodeAt(0) === 10240,
+        empty_color = '2B2B2b';
 
     return cli_table([
         ['Confirmed Cases Heat Map'],
@@ -134,10 +135,10 @@ function map(data, shade) {
                 const px = [...row];
                 return px.map((p, j) => {
                     if (is_empty_unicode(p))
-                        return p;
+                        return chalk.hex(empty_color)(p);
                     const states_that_have_pixel = states.filter(s => maps[s][i][j] && !is_empty_unicode(maps[s][i][j])),
                         shades = states_that_have_pixel.map(s => state_shades[s]);
-                    return chalk.hex(shades.length ? average_shade(shades) : '2B2B2b')(p);
+                    return chalk.hex(shades.length ? average_shade(shades) : empty_color)(p);
                 }).join('');
             }).join('\n'),
         ],

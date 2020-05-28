@@ -20,12 +20,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "asciichart": "^1.5.15",
-    "chalk": "^3.0.0",
+    "ansi_up": "^4.0.4",
+    "asciichart": "^1.5.19",
+    "chalk": "^4.0.0",
     "markdown-table": "^2.0.0",
     "node-fetch": "^2.6.0",
-    "papaparse": "^5.1.1",
-    "strip-ansi": "^6.0.0",
+    "papaparse": "^5.2.0",
     "table": "^5.4.6"
   }
 }
