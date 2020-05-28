@@ -23,6 +23,7 @@ const html = (nav, [us_map, graphs, table], states) => `<!doctype html>
         }
         pre {
             margin: 0;
+            letter-spacing: -1px;
         }
         h1 {  
             margin: 0 10px;
