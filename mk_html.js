@@ -19,7 +19,7 @@ const html = (nav, [us_map, graphs, table], states) => `<!doctype html>
         html, a, pre {
             background: #2B2B2b;
             color: #f8f8f8;
-            font-family: EversonMono, monospace;
+            font-family: FreeMono, monospace;
         }
         pre {
             margin: 0;

@@ -1,9 +1,9 @@
 /* font converted using font-converter.net. thank you! */
 @font-face {
-  font-family: "EversonMono";
+  font-family: "FreeMono";
 
-  src: url("./fonts/mono.woff") format("woff"), /* Modern Browsers */
-    url("./fonts/mono.woff2") format("woff2"); /* Modern Browsers */
+  src: url("./fonts/FreeMono.woff") format("woff"), /* Modern Browsers */
+    url("./fonts/FreeMono.woff2") format("woff2"); /* Modern Browsers */
   font-weight: normal;
   font-style: normal;
 }
