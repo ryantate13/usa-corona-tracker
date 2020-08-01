@@ -21,8 +21,8 @@
   "license": "ISC",
   "dependencies": {
     "ansi_up": "^4.0.4",
-    "asciichart": "^1.5.19",
-    "chalk": "^4.0.0",
+    "asciichart": "^1.5.24",
+    "chalk": "^4.1.0",
     "markdown-table": "^2.0.0",
     "node-fetch": "^2.6.0",
     "papaparse": "^5.2.0",
