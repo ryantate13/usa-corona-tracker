@@ -39,9 +39,8 @@ corona-tracker oregon | grep -e Clackamas -e County -e --
 
 #### Outputs the following Markdown
 
-| County     | Confirmed | ∆ 1 Day | ∆ 7 Day | ∆ 30 Day | Deaths | ∆ 1 Day | ∆ 7 Day | ∆ 30 Day | Last Update |
-| ---------- | --------- | ------- | ------- | -------- | ------ | ------- | ------- | -------- | ----------- |
-| Clackamas  | 1,361     | 22      | 134     | 610      | 36     | 0       | 2       | 12       | 7/31/20     |
+║ County     │ Confirmed │ ∆ 1 Day │ ∆ 7 Day │ ∆ 30 Day │ Deaths │ ∆ 1 Day │ ∆ 7 Day │ ∆ 30 Day │ Last Update ║
+║ Clackamas  │ [97m1,361[39m     │ [97m22[39m      │ [97m134[39m     │ [97m610[39m      │ [97m36[39m     │ [97m0[39m       │ [97m2[39m       │ [91m12[39m       │ 7/31/20     ║
 
 
 ## USA
