@@ -96,18 +96,13 @@ function select(data, state) {
     return selected.sort((a, b) => b.Confirmed - a.Confirmed);
 }
 
-const shader = max_deaths => v => (v < 1) ? 'FFFFFF' : [
-    'FFE5E5',
-    'FFCCCC',
-    'FFB3B3',
-    'FF9999',
-    'FF7F7F',
-    'FF6666',
-    'FF4D4D',
-    'FF3333',
-    'FF1A1A',
-    'FF0000',
-][Math.min(Math.floor(v / (max_deaths / 10)), 9)];
+const shades = [
+        ...Array(100).fill(0).map((_, i) => {
+            const gb = Math.round(255 * (100 - i) / 100).toString(16).padStart(2, 0).toUpperCase();
+            return `FF${gb}${gb}`;
+        }),
+    ],
+    shader = max => v => (v < 1) ? 'FFFFFF' : shades[Math.min(Math.floor(v / (max / 100)), 99)];
 
 function average_shade(shades) {
     const rgb = [0, 0, 0];
@@ -150,17 +145,17 @@ function graphs(data, state) {
     const keys = Object.keys(data.confirmed[0]),
         dates = keys.filter(k => k.match(/^\d{1,2}\/\d{1,2}\/\d{2}$/)),
         padding = 10,
-        n_dates = 90,
+        n_dates = 100,
         chart_format = {
             height: 20,
             format(x) {
                 return Math.floor(Number(x)).toLocaleString().padStart(padding).slice(-padding);
             },
         },
-        time_series_data = Object.keys(data).reduce((a,c) => {
+        time_series_data = Object.keys(data).reduce((a, c) => {
             const data_set = state ? data[c].filter(row => row.Province_State === state) : data[c],
-                daily_totals = dates.map(d => data_set.map(row => Number(row[d])).reduce((a,b) => a+b));
-            a[c] = daily_totals.map((t, i) => i ? t - daily_totals[i-1] : t).slice(-n_dates);
+                daily_totals = dates.map(d => data_set.map(row => Number(row[d])).reduce((a, b) => a + b));
+            a[c] = daily_totals.map((t, i) => i ? t - daily_totals[i - 1] : t).slice(-n_dates);
             return a;
         }, {});
 
@@ -198,7 +193,7 @@ function display_data(data, is_tty) {
     return table(
         [keys.map(k => k.includes(delta) ? delta + k.split(delta)[1] : k)]
             .concat(values.map(row => row.map((v, i) => {
-                if(!is_number(v))
+                if (!is_number(v))
                     return v;
                 const formatted = v.toLocaleString();
                 return is_tty ? chalk.hex(shaders[i](v))(formatted) : formatted;
