@@ -64,7 +64,7 @@ ${'```'}
 #### Outputs the following Markdown
 
 ${
-    execSync('node index.js oregon | grep -e Clackamas -e County -e --').toString()
+    execSync('FORCE_COLOR=0 node index.js oregon | grep -e Clackamas -e County -e --').toString()
 }
 
 `);

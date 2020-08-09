@@ -118,8 +118,9 @@ function average_shade(shades) {
         .join('');
 }
 
-function map(data, shade) {
-    const {usa} = maps,
+function map(data) {
+    const shade = shader(select(data)[1].Confirmed),
+        {usa} = maps,
         states = Object.keys(maps).filter(k => k !== 'usa'),
         state_shades = states.reduce((a, c) => ({
             ...a,
@@ -149,6 +150,7 @@ function graphs(data, state) {
     const keys = Object.keys(data.confirmed[0]),
         dates = keys.filter(k => k.match(/^\d{1,2}\/\d{1,2}\/\d{2}$/)),
         padding = 10,
+        n_dates = 90,
         chart_format = {
             height: 20,
             format(x) {
@@ -158,7 +160,7 @@ function graphs(data, state) {
         time_series_data = Object.keys(data).reduce((a,c) => {
             const data_set = state ? data[c].filter(row => row.Province_State === state) : data[c],
                 daily_totals = dates.map(d => data_set.map(row => Number(row[d])).reduce((a,b) => a+b));
-            a[c] = daily_totals.map((t, i) => i ? t - daily_totals[i-1] : t).slice(-90);
+            a[c] = daily_totals.map((t, i) => i ? t - daily_totals[i-1] : t).slice(-n_dates);
             return a;
         }, {});
 
@@ -174,7 +176,8 @@ function graphs(data, state) {
         return cli_table([
             [
                 `New ${k === 'confirmed' ? 'Confirmed Cases' : 'Deaths'} per Day - ${
-                    [0, dates.length - 1].map(i => new Date(dates[i]).toLocaleDateString()).join(' through ')
+                    [dates.length - n_dates, dates.length - 1]
+                        .map(i => new Date(dates[i]).toLocaleDateString()).join(' through ')
                 }`,
             ],
             [plot],
