@@ -18,8 +18,8 @@ jobs:
           node mk_readme.js
           node mk_html.js
         env:
-          FORCE_COLOR: true
-          TERM: xterm-256color
+          FORCE_COLOR: 3
+          COLORTERM: truecolor
       - name: Commit
         run: |
           git config --local user.email "action@github.com"
