@@ -1,5 +1,4 @@
 const fs = require('fs'),
-    {execSync} = require('child_process'),
     readme = text => fs.appendFileSync('README.md', `${text}\n\n`);
 
 const {display_data, get_corona_data, select} = require('./corona');
@@ -63,9 +62,12 @@ ${'```'}
 
 #### Outputs the following Markdown
 
-${
-    execSync('FORCE_COLOR=0 node index.js oregon | grep -e Clackamas -e County -e --').toString()
-}
+${await (async () => {
+    const oregon = await display_data(select(corona_data, 'Oregon'), false),
+        lines = oregon.split('\n'),
+        match = lines.filter(l => ['Clackamas', 'County', '--'].some(term => l.includes(term)));
+    return match.join('\n');
+})()}
 
 `);
 
